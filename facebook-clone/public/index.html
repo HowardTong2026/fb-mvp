@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Facebook Clone</title>
+<style>
+  :root{
+    --bg:#0a0e1a; --bg2:#111830; --card:#151c33; --card2:#1b2440;
+    --line:rgba(255,255,255,.09); --ink:#eef1f8; --muted:#98a2bd; --dim:#6d7690;
+    --blue:#1877f2; --blue2:#4b9bff; --ok:#2fbf71; --err:#ff5a5f; --gold:#f7b733;
+    --r:14px; --rail:250px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,
+      "PingFang TC","Microsoft JhengHei",sans-serif;
+    color:var(--ink); background:var(--bg); -webkit-font-smoothing:antialiased;
+  }
+  body::before{
+    content:""; position:fixed; inset:-30vmax; z-index:-2;
+    background:
+      radial-gradient(38vmax 38vmax at 15% 20%, rgba(24,119,242,.34), transparent 62%),
+      radial-gradient(32vmax 32vmax at 85% 28%, rgba(139,92,246,.28), transparent 62%),
+      radial-gradient(40vmax 40vmax at 60% 85%, rgba(16,185,129,.18), transparent 62%),
+      var(--bg);
+    filter:blur(30px); animation:drift 28s ease-in-out infinite alternate;
+  }
+  @keyframes drift{0%{transform:translate3d(0,0,0) scale(1)}100%{transform:translate3d(3%,-3%,0) scale(1.08)}}
+  button{font-family:inherit}
+  .hide{display:none !important}
+
+  /* ===================== AUTH ===================== */
+  .auth{min-height:100vh;display:grid;place-items:center;padding:28px 20px}
+  .auth-card{width:100%;max-width:940px;display:grid;grid-template-columns:1fr .92fr;
+    border:1px solid var(--line);border-radius:24px;overflow:hidden;
+    background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.03));
+    backdrop-filter:blur(22px) saturate(140%);box-shadow:0 30px 90px rgba(0,0,0,.55);
+    animation:rise .55s cubic-bezier(.2,.8,.2,1) both}
+  @keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+  .auth-hero{padding:44px 40px;display:flex;flex-direction:column;justify-content:space-between;
+    border-right:1px solid var(--line);background:linear-gradient(160deg,rgba(24,119,242,.15),transparent 55%)}
+  .brand{display:flex;align-items:center;gap:11px;font-size:25px;font-weight:800;letter-spacing:-.5px}
+  .mark{width:40px;height:40px;border-radius:50%;background:linear-gradient(145deg,var(--blue),#0b5ed7);
+    display:grid;place-items:center;font-size:23px;font-weight:800;box-shadow:0 6px 20px rgba(24,119,242,.5)}
+  .auth-hero h1{font-size:40px;line-height:1.06;letter-spacing:-1.4px;margin:28px 0 12px;font-weight:800}
+  .auth-hero h1 em{font-style:normal;background:linear-gradient(95deg,var(--blue2),#a78bfa);
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .auth-hero p{color:var(--muted);font-size:15.5px;line-height:1.65;max-width:40ch}
+  .feats{margin-top:26px;display:grid;gap:11px}
+  .feat{display:flex;gap:11px;align-items:flex-start;font-size:14px;color:#c9d1e4}
+  .tick{width:20px;height:20px;border-radius:6px;flex:0 0 20px;display:grid;place-items:center;
+    background:rgba(47,191,113,.16);color:var(--ok);font-size:12px;margin-top:1px}
+  .chips{margin-top:30px;display:flex;gap:8px;flex-wrap:wrap}
+  .chip{font-size:11.5px;padding:5px 11px;border-radius:999px;border:1px solid var(--line);
+    background:rgba(255,255,255,.045);color:#aab3c9}
+  .auth-pane{padding:44px 40px}
+  .tabs{display:flex;gap:6px;background:rgba(0,0,0,.3);padding:5px;border-radius:12px;margin-bottom:24px}
+  .tab{flex:1;padding:10px;border-radius:9px;border:0;background:transparent;color:var(--muted);
+    font:600 14px/1 inherit;cursor:pointer;transition:.18s}
+  .tab[aria-selected="true"]{background:linear-gradient(140deg,var(--blue),#0d63d6);color:#fff;
+    box-shadow:0 5px 16px rgba(24,119,242,.42)}
+  .field{margin-bottom:15px}
+  .field label{display:block;font-size:12.5px;font-weight:600;color:#b9c1d6;margin-bottom:7px}
+  .field input{width:100%;padding:13px 15px;border-radius:11px;border:1px solid var(--line);
+    background:rgba(0,0,0,.3);color:var(--ink);font-size:15px;outline:0;transition:.18s}
+  .field input:focus{border-color:var(--blue);box-shadow:0 0 0 3.5px rgba(24,119,242,.2)}
+  .field input::placeholder{color:#666f87}
+  .btn{width:100%;padding:13px;border:0;border-radius:11px;font:700 15px/1 inherit;cursor:pointer;transition:.18s}
+  .btn.primary{background:linear-gradient(140deg,var(--blue),#0d63d6);color:#fff;box-shadow:0 8px 24px rgba(24,119,242,.4)}
+  .btn.primary:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 12px 30px rgba(24,119,242,.55)}
+  .btn.primary:disabled{opacity:.55;cursor:not-allowed}
+  .btn.ghost{background:rgba(255,255,255,.06);color:var(--ink);border:1px solid var(--line)}
+  .btn.ghost:hover:not(:disabled){background:rgba(255,255,255,.12)}
+  .btn.sm{width:auto;padding:8px 15px;font-size:13px;border-radius:9px}
+  .sep{display:flex;align-items:center;gap:13px;margin:18px 0;color:#6d7690;font-size:12px}
+  .sep::before,.sep::after{content:"";height:1px;background:var(--line);flex:1}
+  .gbtn{width:100%;padding:12px;border-radius:11px;border:1px solid var(--line);background:rgba(255,255,255,.055);
+    color:var(--ink);font:600 14.5px/1 inherit;cursor:pointer;display:flex;align-items:center;
+    justify-content:center;gap:10px;transition:.18s}
+  .gbtn:hover:not(:disabled){background:rgba(255,255,255,.12)}
+  .gbtn svg{width:18px;height:18px;flex:0 0 18px}
+  .note{margin-top:14px;padding:12px 14px;border-radius:11px;font-size:13px;line-height:1.55;display:none}
+  .note.show{display:block;animation:pop .3s ease both}
+  @keyframes pop{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .note.ok{background:rgba(47,191,113,.13);border:1px solid rgba(47,191,113,.35);color:#7ee2a8}
+  .note.err{background:rgba(255,90,95,.13);border:1px solid rgba(255,90,95,.35);color:#ff9ba0}
+  .note.info{background:rgba(24,119,242,.13);border:1px solid rgba(24,119,242,.35);color:#9cc6ff}
+  .note code{font-size:12px;word-break:break-all;opacity:.9}
+  .hint{margin-top:18px;padding:11px 13px;border-radius:10px;background:rgba(247,183,51,.09);
+    border:1px solid rgba(247,183,51,.28);color:#f4d38a;font-size:12.5px;line-height:1.6}
+
+  /* ===================== APP SHELL ===================== */
+  .app{display:flex;min-height:100vh}
+  .rail{width:var(--rail);flex:0 0 var(--rail);position:sticky;top:0;height:100vh;
+    padding:18px 12px;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:6px;
+    background:rgba(10,14,26,.72);backdrop-filter:blur(18px)}
+  .rail .brand{padding:6px 10px 16px;font-size:21px}
+  .nav{display:flex;align-items:center;gap:13px;padding:11px 13px;border-radius:11px;cursor:pointer;
+    color:var(--muted);font:600 14.5px/1 inherit;border:0;background:transparent;width:100%;text-align:left;
+    transition:.16s;position:relative}
+  .nav:hover{background:rgba(255,255,255,.06);color:var(--ink)}
+  .nav.active{background:linear-gradient(140deg,rgba(24,119,242,.24),rgba(24,119,242,.08));color:#fff}
+  .nav svg{width:21px;height:21px;flex:0 0 21px;fill:currentColor;opacity:.92}
+  .nav .badge{position:absolute;right:12px;min-width:20px;height:20px;padding:0 6px;border-radius:10px;
+    background:var(--blue);color:#fff;font-size:11px;font-weight:700;display:grid;place-items:center}
+  .rail-foot{margin-top:auto;border-top:1px solid var(--line);padding-top:12px}
+  .me{display:flex;align-items:center;gap:10px;padding:8px 9px;border-radius:11px}
+  .av{width:38px;height:38px;flex:0 0 38px;border-radius:50%;display:grid;place-items:center;
+    font-weight:800;font-size:16px;color:#fff;background:linear-gradient(145deg,var(--blue),#7c3aed)}
+  .me .nm{font-size:13.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .me .em{font-size:11.5px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .main{flex:1;min-width:0;display:flex;flex-direction:column}
+  .topbar{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:14px;padding:13px 24px;
+    border-bottom:1px solid var(--line);background:rgba(10,14,26,.78);backdrop-filter:blur(18px)}
+  .search{flex:1;max-width:420px;display:flex;align-items:center;gap:9px;padding:9px 14px;border-radius:22px;
+    background:rgba(255,255,255,.07);border:1px solid var(--line)}
+  .search input{flex:1;border:0;background:transparent;color:var(--ink);font-size:14px;outline:0}
+  .search input::placeholder{color:#666f87}
+  .search svg{width:16px;height:16px;fill:var(--dim);flex:0 0 16px}
+  .icon-btn{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:rgba(255,255,255,.05);
+    color:var(--muted);font-size:17px;cursor:pointer;display:grid;place-items:center;transition:.16s;flex:0 0 38px}
+  .icon-btn:hover{background:rgba(255,255,255,.12);color:var(--ink)}
+  .view{display:none;padding:22px 24px 60px;max-width:820px;width:100%;margin:0 auto}
+  .view.on{display:block;animation:fade .28s ease both}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  h2.vh{font-size:23px;letter-spacing:-.5px;margin-bottom:16px}
+
+  /* cards */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+    padding:18px;margin-bottom:16px;box-shadow:0 2px 14px rgba(0,0,0,.22)}
+  .composer textarea{width:100%;min-height:64px;resize:vertical;padding:13px 15px;border-radius:11px;
+    border:1px solid var(--line);background:rgba(0,0,0,.3);color:var(--ink);font-size:15px;outline:0;transition:.18s;
+    font-family:inherit}
+  .composer textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3.5px rgba(24,119,242,.18)}
+  .composer-foot{display:flex;align-items:center;gap:10px;margin-top:12px}
+  .composer-foot .btn{margin-left:auto;width:auto;padding:9px 20px;font-size:14px}
+  .post{display:flex;gap:12px}
+  .post-av{width:44px;height:44px;flex:0 0 44px;border-radius:50%;display:grid;place-items:center;
+    font-weight:800;font-size:17px;color:#fff}
+  .post-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+  .post-head .nm{font-weight:700;font-size:15px}
+  .post-head .tm{font-size:12px;color:var(--dim)}
+  .post-body{margin-top:6px;font-size:15px;line-height:1.6;white-space:pre-wrap;word-wrap:break-word}
+  .post-acts{display:flex;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+  .act{flex:1;padding:9px;border-radius:9px;border:0;background:rgba(255,255,255,.04);color:var(--muted);
+    font:600 13.5px/1 inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:.16s}
+  .act:hover{background:rgba(255,255,255,.09);color:var(--ink)}
+  .act.on{color:var(--blue2)}
+  .act svg{width:17px;height:17px;fill:currentColor}
+  .cmts{margin-top:12px;display:flex;flex-direction:column;gap:9px}
+  .cmt{background:rgba(255,255,255,.045);border-radius:11px;padding:9px 12px;font-size:14px}
+  .cmt .who{font-weight:700;font-size:13px;margin-bottom:2px}
+  .cmt-input{display:flex;gap:9px;margin-top:10px}
+  .cmt-input input{flex:1;padding:10px 13px;border-radius:20px;border:1px solid var(--line);
+    background:rgba(0,0,0,.3);color:var(--ink);font-size:14px;outline:0}
+  .cmt-input input:focus{border-color:var(--blue)}
+
+  /* profile */
+  .cover{height:190px;border-radius:var(--r) var(--r) 0 0;background:
+    linear-gradient(120deg,#1877f2,#7c3aed 55%,#f7b733);opacity:.9}
+  .prof-head{padding:0 20px 18px;margin-top:-46px;position:relative}
+  .prof-av{width:104px;height:104px;border-radius:50%;border:4px solid var(--card);display:grid;place-items:center;
+    font-size:38px;font-weight:800;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.4)}
+  .prof-name{font-size:24px;font-weight:800;margin-top:12px;letter-spacing:-.4px}
+  .prof-bio{color:var(--muted);font-size:14px;margin-top:5px;line-height:1.55}
+  .stats{display:flex;gap:26px;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+  .stat b{font-size:17px;display:block}
+  .stat span{font-size:12px;color:var(--dim)}
+  .edit-row{display:flex;gap:9px;margin-top:14px}
+  .edit-row input{flex:1;padding:10px 13px;border-radius:10px;border:1px solid var(--line);
+    background:rgba(0,0,0,.3);color:var(--ink);font-size:14px;outline:0}
+
+  /* friends */
+  .people{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
+  .person{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px;text-align:center}
+  .person .av{width:64px;height:64px;margin:0 auto 10px;font-size:24px}
+  .person .nm{font-weight:700;font-size:15px}
+  .person .bio{color:var(--dim);font-size:12.5px;margin-top:5px;line-height:1.5;min-height:34px}
+  .person .btn{margin-top:12px;padding:9px;font-size:13.5px}
+  .person .btn.add{background:linear-gradient(140deg,var(--blue),#0d63d6);color:#fff}
+  .person .btn.rem{background:rgba(255,255,255,.07);border:1px solid var(--line);color:var(--muted)}
+
+  /* messages */
+  .msgwrap{display:grid;grid-template-columns:250px 1fr;gap:16px;height:calc(100vh - 150px)}
+  .threads{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column}
+  .thread{display:flex;gap:10px;align-items:center;padding:12px 14px;cursor:pointer;border-bottom:1px solid var(--line);transition:.15s}
+  .thread:hover{background:rgba(255,255,255,.05)}
+  .thread.on{background:rgba(24,119,242,.16)}
+  .thread .nm{font-weight:700;font-size:14px}
+  .thread .pv{font-size:11.5px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .thread .av{width:40px;height:40px;flex:0 0 40px;font-size:15px}
+  .conv{background:var(--card);border:1px solid var(--line);border-radius:var(--r);display:flex;flex-direction:column;overflow:hidden}
+  .conv-head{display:flex;align-items:center;gap:11px;padding:13px 16px;border-bottom:1px solid var(--line)}
+  .conv-head .nm{font-weight:700;font-size:15px}
+  .conv-head .st{font-size:11.5px;color:var(--ok);margin-top:1px}
+  .msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:9px}
+  .bub{max-width:74%;padding:10px 14px;border-radius:18px;font-size:14.5px;line-height:1.5;
+    white-space:pre-wrap;word-wrap:break-word}
+  .bub.me{align-self:flex-end;background:linear-gradient(140deg,var(--blue),#0d63d6);color:#fff;border-bottom-right-radius:5px}
+  .bub.her{align-self:flex-start;background:rgba(255,255,255,.09);border:1px solid var(--line);border-bottom-left-radius:5px}
+  .bub .st{display:block;font-size:10.5px;opacity:.55;margin-top:4px}
+  .bub.me .st{text-align:right}
+  .typing{align-self:flex-start;display:flex;gap:4px;padding:12px 16px;border-radius:18px;
+    background:rgba(255,255,255,.09);border:1px solid var(--line)}
+  .typing i{width:6px;height:6px;border-radius:50%;background:#8b93ab;animation:bl 1.3s infinite}
+  .typing i:nth-child(2){animation-delay:.18s} .typing i:nth-child(3){animation-delay:.36s}
+  @keyframes bl{0%,60%,100%{opacity:.25;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
+  .conv-in{display:flex;gap:9px;padding:12px 14px;border-top:1px solid var(--line)}
+  .conv-in input{flex:1;padding:11px 15px;border-radius:22px;border:1px solid var(--line);
+    background:rgba(0,0,0,.3);color:var(--ink);font-size:14.5px;outline:0}
+  .conv-in input:focus{border-color:var(--blue)}
+  .send{width:42px;height:42px;flex:0 0 42px;border-radius:50%;border:0;cursor:pointer;
+    background:linear-gradient(140deg,var(--blue),#0d63d6);color:#fff;display:grid;place-items:center;
+    box-shadow:0 6px 18px rgba(24,119,242,.4);transition:.16s}
+  .send:hover:not(:disabled){transform:scale(1.06)}
+  .send:disabled{opacity:.45;cursor:not-allowed}
+  .empty{margin:auto;text-align:center;color:var(--dim);font-size:13.5px;line-height:1.8;padding:30px}
+
+  /* notifications */
+  .dot-badge{position:absolute;top:5px;right:5px;width:9px;height:9px;border-radius:50%;
+    background:#ff4757;border:1.5px solid var(--bg)}
+  .icon-btn{position:relative}
+  .notif-panel{display:none;position:absolute;top:62px;right:24px;z-index:20;width:340px;max-width:92vw;
+    background:var(--card2);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;
+    box-shadow:0 18px 50px rgba(0,0,0,.5)}
+  .notif-panel.on{display:block;animation:pop .2s ease both}
+  .notif-head{display:flex;align-items:center;justify-content:space-between;padding:13px 15px;border-bottom:1px solid var(--line)}
+  .notif-list{max-height:380px;overflow-y:auto}
+  .notif-item{display:flex;gap:11px;padding:12px 15px;border-bottom:1px solid var(--line);cursor:pointer;transition:.15s}
+  .notif-item:hover{background:rgba(255,255,255,.05)}
+  .notif-item.unread{background:rgba(24,119,242,.10)}
+  .notif-item .t{font-size:13.5px;line-height:1.5}
+  .notif-item .t b{color:var(--blue2)}
+  .notif-item .w{font-size:11.5px;color:var(--dim);margin-top:3px}
+
+  /* settings */
+  .ch{font-size:15px;font-weight:700;margin-bottom:14px}
+  .kv{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+  .kv span{color:var(--dim)}
+  .kv b{font-weight:600}
+  .toggle{display:flex;align-items:center;gap:10px;padding:9px 0;font-size:13.5px;color:#c9d1e4;cursor:pointer}
+  .toggle input{width:16px;height:16px;accent-color:var(--blue)}
+
+  /* post menu */
+  .post-menu{position:relative;margin-left:auto}
+  .post-menu-btn{border:0;background:transparent;color:var(--dim);font-size:20px;cursor:pointer;
+    line-height:1;padding:2px 6px;border-radius:6px}
+  .post-menu-btn:hover{background:rgba(255,255,255,.08);color:var(--ink)}
+  .post-menu-pop{position:absolute;right:0;top:26px;z-index:9;min-width:150px;background:var(--card2);
+    border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:0 12px 30px rgba(0,0,0,.5)}
+  .post-menu-pop button{display:block;width:100%;padding:10px 13px;border:0;background:transparent;
+    color:var(--ink);font:500 13px/1 inherit;text-align:left;cursor:pointer}
+  .post-menu-pop button:hover{background:rgba(255,255,255,.07)}
+  .post-menu-pop button.danger{color:#ff7b80}
+  .edited{font-size:11.5px;color:var(--dim);margin-left:2px}
+
+  /* search */
+  .sec{margin-bottom:22px}
+  .sec h3{font-size:14px;color:var(--muted);margin-bottom:10px;font-weight:700}
+  .srow{display:flex;gap:12px;align-items:center;padding:11px 14px;border:1px solid var(--line);
+    border-radius:11px;margin-bottom:8px;background:var(--card)}
+  .srow .av{width:36px;height:36px;flex:0 0 36px;font-size:14px}
+  .srow .t{font-size:13.5px;line-height:1.5}
+  .srow .t b{font-weight:700}
+  .srow .t span{color:var(--dim)}
+
+  .mention-hint{margin-top:8px;font-size:11.5px;color:var(--dim)}
+  .mention-hint b{color:var(--blue2);cursor:pointer}
+
+  /* identicon avatars */
+  .av,.post-av,.prof-av,.npc-av{overflow:hidden}
+  .av img,.post-av img,.prof-av img{width:100%;height:100%;border-radius:50%;display:block}
+  .prof-av img{border-radius:50%}
+
+  /* inline post editor */
+  .editor{margin-top:12px;border:1px solid var(--blue);border-radius:12px;padding:12px;
+    background:rgba(0,0,0,.3);box-shadow:0 0 0 3px rgba(24,119,242,.12)}
+  .editor textarea{width:100%;min-height:92px;resize:vertical;padding:0;border:0;background:transparent;
+    color:var(--ink);font-size:15px;line-height:1.6;outline:0;font-family:inherit}
+  .editor-bar{display:flex;align-items:center;gap:7px;margin-top:11px;padding-top:11px;border-top:1px solid var(--line)}
+  .emoji{padding:6px 9px;border-radius:8px;border:1px solid var(--line);background:rgba(255,255,255,.05);
+    cursor:pointer;font-size:15px;line-height:1;transition:.15s}
+  .emoji:hover{background:rgba(255,255,255,.13);transform:scale(1.12)}
+  .editor-count{margin-left:auto;font-size:11.5px;color:var(--dim)}
+  .editor-count.over{color:#ff9ba0}
+  .editor-actions{display:flex;gap:8px;margin-top:11px}
+
+  /* mention autocomplete */
+  .mention-pop{position:absolute;z-index:30;background:var(--card2);border:1px solid var(--line);
+    border-radius:11px;overflow:hidden;box-shadow:0 14px 40px rgba(0,0,0,.55);max-height:230px;overflow-y:auto;min-width:210px}
+  .mention-item{display:flex;gap:10px;align-items:center;padding:9px 12px;cursor:pointer}
+  .mention-item:hover,.mention-item.hi{background:rgba(24,119,242,.2)}
+  .mention-item .av{width:30px;height:30px;flex:0 0 30px;font-size:12px}
+  .mention-item .t{font-size:13.5px;font-weight:600}
+  .mention-item .s{font-size:11px;color:var(--dim)}
+
+  /* friend request states */
+  .person .st{font-size:11.5px;margin-top:7px;color:var(--dim)}
+  .person .st.pending{color:var(--gold)}
+  .person .st.incoming{color:var(--blue2)}
+  .btn.accept{background:linear-gradient(140deg,var(--ok),#1d9e5c);color:#fff}
+  .btn.decline{background:rgba(255,255,255,.07);border:1px solid var(--line);color:var(--muted)}
+  .req-row{display:flex;gap:10px;margin-top:10px}
+  .req-row .btn{flex:1;padding:9px;font-size:13px}
+  mark{background:rgba(247,183,51,.3);color:#ffd97d;border-radius:3px;padding:0 2px}
+
+  @media (max-width:900px){
+    :root{--rail:66px}
+    .rail .brand span,.nav .lbl,.me .nm,.me .em,.chips{display:none}
+    .nav{justify-content:center;padding:12px 0}
+    .msgwrap{grid-template-columns:1fr}
+    .threads{display:none}
+    .auth-card{grid-template-columns:1fr}
+    .auth-hero{border-right:0;border-bottom:1px solid var(--line);padding:32px 26px}
+    .auth-hero h1{font-size:29px}
+    .auth-pane{padding:28px 26px}
+  }
+</style>
+</head>
+<body>
+
+<!-- ===================== AUTH ===================== -->
+<div class="auth" id="authScreen">
+  <div class="auth-card">
+    <div class="auth-hero">
+      <div>
+        <div class="brand"><div class="mark">f</div><span>Facebook<span style="color:var(--muted);font-weight:500">Clone</span></span></div>
+        <h1>Connect with people, <em>verified.</em></h1>
+        <p>A social network on Cloudflare Workers. Confirm your email, fill in your feed, and talk to Mika — she actually replies.</p>
+        <div class="feats">
+          <div class="feat"><div class="tick">✓</div><div>Verification emails delivered by <b>Resend</b></div></div>
+          <div class="feat"><div class="tick">✓</div><div>One-tap <b>Google sign-in</b> (OAuth 2.0)</div></div>
+          <div class="feat"><div class="tick">✓</div><div>Feed, posts, comments, likes, profile, friends</div></div>
+          <div class="feat"><div class="tick">✓</div><div>Messenger with <b>Mika</b> — powered by OpenCode</div></div>
+        </div>
+      </div>
+      <div class="chips">
+        <span class="chip">Cloudflare Workers</span><span class="chip">D1</span>
+        <span class="chip">Resend</span><span class="chip">Google OAuth</span><span class="chip">OpenCode</span>
+      </div>
+    </div>
+
+    <div class="auth-pane">
+      <div class="tabs">
+        <button class="tab" id="tabSignup" aria-selected="true" onclick="showTab('signup')">Sign up</button>
+        <button class="tab" id="tabLogin"  aria-selected="false" onclick="showTab('login')">Log in</button>
+      </div>
+
+      <form id="formSignup" onsubmit="return doSignup(event)">
+        <div class="field"><label for="suName">Name</label><input id="suName" placeholder="Howard Tong" autocomplete="name" /></div>
+        <div class="field"><label for="suEmail">Email address</label><input id="suEmail" type="email" placeholder="you@gmail.com" autocomplete="email" required /></div>
+        <button class="btn primary" id="suBtn" type="submit">Send verification email</button>
+        <div class="note" id="suNote"></div>
+        <div class="hint" id="emailHintSignup">📮 Email sending uses Resend's shared <code>onboarding@resend.dev</code> sender, which can only deliver to <b>howardtong2026@gmail.com</b>. Use <b>Continue with Google</b> to sign in with any other address.</div>
+      </form>
+
+      <form id="formLogin" onsubmit="return doLogin(event)" style="display:none">
+        <div class="field"><label for="liEmail">Email address</label><input id="liEmail" type="email" placeholder="you@gmail.com" autocomplete="email" required /></div>
+        <button class="btn primary" id="liBtn" type="submit">Send sign-in link</button>
+        <div class="note" id="liNote"></div>
+        <div class="hint" id="emailHintLogin">📮 The sign-in link is emailed by Resend — it reaches <b>howardtong2026@gmail.com</b> only. Or use Google below.</div>
+      </form>
+
+      <div class="sep">or</div>
+      <button class="gbtn" id="gBtn" onclick="doGoogle()">
+        <svg viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.24 5.48-4.78 7.18l7.73 6c4.51-4.17 7.09-10.32 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59A14.5 14.5 0 019.43 24c0-1.59.27-3.13.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.9-5.8l-7.73-6c-2.15 1.45-4.92 2.3-8.17 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        <span id="gBtnTitle">Continue with Google</span>
+      </button>
+      <div class="note" id="gNote"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== APP ===================== -->
+<div class="app hide" id="app">
+  <aside class="rail">
+    <div class="brand"><div class="mark">f</div><span>Facebook</span></div>
+
+    <button class="nav active" data-view="feed" onclick="go('feed')">
+      <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8h5z"/></svg>
+      <span class="lbl">首頁 · Feed</span>
+    </button>
+    <button class="nav" data-view="profile" onclick="go('profile')">
+      <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+      <span class="lbl">個人檔案 · Profile</span>
+    </button>
+    <button class="nav" data-view="friends" onclick="go('friends')">
+      <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+      <span class="lbl">朋友 · Friends</span>
+    </button>
+    <button class="nav" data-view="messages" onclick="go('messages')">
+      <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>
+      <span class="lbl">訊息 · Messages</span>
+      <span class="badge hide" id="msgBadge">0</span>
+    </button>
+    <button class="nav" data-view="settings" onclick="go('settings')">
+      <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.48.48 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 00-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.48.48 0 00-.59.22L2.74 8.87c-.12.21-.07.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1112 8.4a3.6 3.6 0 010 7.2z"/></svg>
+      <span class="lbl">設定 · Settings</span>
+    </button>
+
+    <div class="rail-foot">
+      <div class="me">
+        <div class="av" id="meAv">?</div>
+        <div style="min-width:0">
+          <div class="nm" id="meName">—</div>
+          <div class="em" id="meEmail">—</div>
+        </div>
+      </div>
+      <button class="nav" style="margin-top:6px" onclick="doLogout()">
+        <svg viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+        <span class="lbl">登出 · Sign out</span>
+      </button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="search">
+        <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+        <input id="searchInput" placeholder="搜尋人、貼文…" oninput="doSearch(this.value)" />
+      </div>
+      <button class="icon-btn" id="notifBtn" title="通知" onclick="toggleNotifs()">
+        🔔<span class="dot-badge hide" id="notifBadge"></span>
+      </button>
+      <button class="icon-btn" title="訊息" onclick="go('messages')">💬</button>
+    </header>
+
+    <div class="notif-panel" id="notifPanel">
+      <div class="notif-head">
+        <b>通知</b>
+        <button class="btn ghost sm" onclick="markNotifsRead()">全部標為已讀</button>
+      </div>
+      <div id="notifList" class="notif-list"></div>
+    </div>
+
+    <!-- SEARCH RESULTS -->
+    <section class="view" id="viewSearch">
+      <h2 class="vh">搜尋結果</h2>
+      <div id="searchResults"></div>
+    </section>
+
+    <!-- FEED -->
+    <section class="view on" id="viewFeed">
+      <div class="card composer">
+        <textarea id="postBody" placeholder="在想什麼，Howard？"
+          oninput="onComposerInput()" onkeydown="onComposerKey(event)"
+          onblur="setTimeout(hideMentions, 200)"></textarea>
+        <div class="composer-foot">
+          <span style="font-size:12.5px;color:var(--dim)">發佈到朋友圈</span>
+          <button class="btn primary" id="postBtn" onclick="createPost()">發佈</button>
+        </div>
+        <div class="mention-hint">想標記朋友？輸入 <b>@名字</b> — 例如 <b>@Mika</b>、<b>@Ruri</b></div>
+        <div class="note" id="postNote"></div>
+      </div>
+      <div id="feedList"></div>
+    </section>
+
+    <!-- PROFILE -->
+    <section class="view" id="viewProfile">
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="cover"></div>
+        <div class="prof-head">
+          <div class="prof-av" id="profAv">?</div>
+          <div class="prof-name" id="profName">—</div>
+          <div class="prof-bio" id="profBio">—</div>
+          <div class="stats">
+            <div class="stat"><b id="stPosts">0</b><span>貼文</span></div>
+            <div class="stat"><b id="stFriends">0</b><span>朋友</span></div>
+            <div class="stat"><b id="stLikes">0</b><span>說讚</span></div>
+          </div>
+          <div class="edit-row">
+            <input id="editName" placeholder="你的名字" />
+            <input id="editBio" placeholder="一句話介紹自己" />
+            <button class="btn primary sm" onclick="saveProfile()">儲存</button>
+          </div>
+          <div class="note" id="profNote"></div>
+        </div>
+      </div>
+      <h2 class="vh">我的貼文</h2>
+      <div id="myPosts"></div>
+    </section>
+
+    <!-- FRIENDS -->
+    <section class="view" id="viewFriends">
+      <h2 class="vh">朋友</h2>
+      <div class="people" id="peopleList"></div>
+    </section>
+
+    <!-- MESSAGES -->
+    <section class="view" id="viewMessages">
+      <h2 class="vh">訊息</h2>
+      <div class="msgwrap">
+        <div class="threads" id="threadList"></div>
+        <div class="conv">
+          <div class="conv-head">
+            <div class="av" id="convAv" style="background:linear-gradient(145deg,#f7b733,#fc4a1a)">M</div>
+            <div style="flex:1;min-width:0">
+              <div class="nm" id="convName">Mika</div>
+              <div class="st" id="convStatus">● 在線</div>
+            </div>
+            <button class="icon-btn" id="chatReset" title="開始新對話">↺</button>
+          </div>
+          <div class="msgs" id="msgList"></div>
+          <div class="conv-in">
+            <input id="chatText" placeholder="傳訊息…" autocomplete="off" />
+            <button class="send" id="chatSend" aria-label="送出">
+              <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M3.4 20.4l17.45-7.48a1 1 0 000-1.84L3.4 3.6a.99.99 0 00-1.39.91L2 9.12c0 .5.37.93.87.99L17 12 2.87 13.88c-.5.07-.87.5-.87 1l.01 4.61c0 .71.73 1.2 1.39.91z"/></svg>
+            </button>
+          </div>
+          <div class="note" id="chatNote" style="margin:0 14px 12px"></div>
+        </div>
+      </div>
+    </section>
+    <!-- SETTINGS -->
+    <section class="view" id="viewSettings">
+      <h2 class="vh">設定</h2>
+
+      <div class="card">
+        <h3 class="ch">帳號 · Account</h3>
+        <div class="kv"><span>電子郵件</span><b id="setEmail">—</b></div>
+        <div class="kv"><span>名稱</span><b id="setName">—</b></div>
+        <div class="kv"><span>加入時間</span><b id="setSince">—</b></div>
+        <div class="edit-row">
+          <input id="setNameInput" placeholder="你的名字" />
+          <input id="setBioInput" placeholder="一句話介紹自己" />
+          <button class="btn primary sm" onclick="saveSettings()">儲存個人資料</button>
+        </div>
+        <div class="note" id="setNote"></div>
+      </div>
+
+      <div class="card">
+        <h3 class="ch">通知 · Notifications</h3>
+        <label class="toggle"><input type="checkbox" id="setLikes" onchange="saveSettings()"> <span>有人讚我的貼文時通知我</span></label>
+        <label class="toggle"><input type="checkbox" id="setComments" onchange="saveSettings()"> <span>有人留言時通知我</span></label>
+        <label class="toggle"><input type="checkbox" id="setFriends" onchange="saveSettings()"> <span>有人加我好友時通知我</span></label>
+      </div>
+
+      <div class="card">
+        <h3 class="ch">其他 · Other</h3>
+        <button class="btn ghost" onclick="doLogout()">登出所有裝置 · Sign out</button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+/* ================= helpers ================= */
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+const note = (el, kind, msg, html) => { el.className = "note show " + kind; el.innerHTML = html ? msg : esc(msg); };
+const ago = (ts) => {
+  const s = Math.floor((Date.now() - ts) / 1000);
+  if (s < 60) return "剛剛";
+  if (s < 3600) return Math.floor(s / 60) + " 分鐘前";
+  if (s < 86400) return Math.floor(s / 3600) + " 小時前";
+  if (s < 604800) return Math.floor(s / 86400) + " 天前";
+  return new Date(ts).toLocaleDateString();
+};
+const clock = (ts) => new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+const initial = (n) => (n || "?").trim().charAt(0).toUpperCase();
+
+/**
+ * Deterministic identicon avatar, generated locally (no external service).
+ * Same email -> same picture, every time, on every device.
+ */
+function avatarSvg(seed, size = 44) {
+  const s = String(seed || "anon");
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  h = h >>> 0;
+  const hue = h % 360;
+  const bg = `hsl(${hue} 48% 38%)`;
+  const fg = `hsl(${(hue + 45) % 360} 75% 90%)`;
+  const cells = [];
+  for (let y = 0; y < 3; y++) {
+    for (let x = 0; x < 3; x++) {
+      if (((h >>> ((y * 3 + x) % 30)) & 1) === 1) {
+        cells.push(`M${x * 20} ${y * 20}h18v18h-18z`);
+        cells.push(`M${(4 - x) * 20 + 2} ${y * 20}h18v18h-18z`);
+      }
+    }
+  }
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="${size}" height="${size}">
+<rect width="100" height="100" fill="${bg}"/><g fill="${fg}">${cells.join("")}</g></svg>`;
+  return "data:image/svg+xml;utf8," + encodeURIComponent(svg.replace(/\n/g, ""));
+}
+
+/** Avatar <img> markup. Falls back to an initial if the seed is empty. */
+function avImg(seed, name, size) {
+  return `<img src="${avatarSvg(seed, size)}" alt="${esc(name || "")}" loading="lazy" />`;
+}
+
+/** Escape + highlight search matches. */
+function hl(text, term) {
+  const safe = esc(text);
+  if (!term) return safe;
+  const t = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return safe.replace(new RegExp(`(${t})`, "gi"), "<mark>$1</mark>");
+}
+
+async function api(path, opts = {}) {
+  const res = await fetch(path, {
+    ...opts,
+    headers: { ...(opts.body ? { "content-type": "application/json" } : {}), ...(opts.headers || {}) },
+  });
+  const t = await res.text();
+  let j; try { j = JSON.parse(t); } catch { j = { ok: false, error: t.slice(0, 200) }; }
+  return { status: res.status, ok: res.ok, j };
+}
+
+/* ================= state ================= */
+const S = { user: null, config: {}, view: "feed", feed: [], profile: null, people: [], messages: [],
+            busy: false, filter: "", editingId: null, peer: "mika" };
+
+/* ================= auth ================= */
+function showTab(which) {
+  const su = which === "signup";
+  $("formSignup").style.display = su ? "" : "none";
+  $("formLogin").style.display = su ? "none" : "";
+  $("tabSignup").setAttribute("aria-selected", su);
+  $("tabLogin").setAttribute("aria-selected", !su);
+}
+
+async function doSignup(e) {
+  e.preventDefault();
+  const btn = $("suBtn"), n = $("suNote");
+  const email = $("suEmail").value.trim(), name = $("suName").value.trim();
+  if (!email) { note(n, "err", "請輸入 email"); return false; }
+  btn.disabled = true; btn.textContent = "傳送中…";
+  try {
+    const { ok, j } = await api("/api/send-verification", { method: "POST", body: JSON.stringify({ email, name }) });
+    if (j.alreadySignedIn) {
+      // already signed in as this address -> no email needed, just go in
+      note(n, "ok", "你已經登入了，直接進去吧 ✓");
+      const s = await api("/api/session");
+      if (s.j.user) { enterApp(s.j.user); return false; }
+    }
+    if (!ok) { note(n, "err", j.error || "傳送失敗"); }
+    else if (j.throttled) {
+      note(n, "info", `剛剛已經寄過一封到 <b>${esc(email)}</b>，不用再寄一次。`, true);
+      if (j.devVerifyUrl) note(n, "info", `開發模式驗證連結：<br><code>${esc(j.devVerifyUrl)}</code>`, true);
+    }
+    else if (j.devVerifyUrl) {
+      note(n, "info", `已寄到 <b>${esc(email)}</b>。<br><br><b>開發模式</b>（不需收信）— 直接開啟驗證連結：<br><code>${esc(j.devVerifyUrl)}</code>`, true);
+    } else {
+      note(n, "ok", `驗證信已寄到 ${email}，請查收。`);
+    }
+  } catch (err) { note(n, "err", "網路錯誤: " + err.message); }
+  btn.disabled = false; btn.textContent = "Send verification email";
+  return false;
+}
+
+async function doLogin(e) {
+  e.preventDefault();
+  const btn = $("liBtn"), n = $("liNote");
+  const email = $("liEmail").value.trim();
+  if (!email) { note(n, "err", "請輸入 email"); return false; }
+  btn.disabled = true; btn.textContent = "傳送中…";
+  try {
+    const { ok, j } = await api("/api/send-verification", { method: "POST", body: JSON.stringify({ email }) });
+    if (j.alreadySignedIn) {
+      note(n, "ok", "你已經登入了，直接進去吧 ✓");
+      const s = await api("/api/session");
+      if (s.j.user) { enterApp(s.j.user); return false; }
+    }
+    if (!ok) { note(n, "err", j.error || "登入失敗"); }
+    else if (j.throttled) {
+      note(n, "info", `剛剛已經寄過登入連結到 <b>${esc(email)}</b>，請直接查收。`, true);
+      if (j.devVerifyUrl) note(n, "info", `開發模式登入連結：<br><code>${esc(j.devVerifyUrl)}</code>`, true);
+    }
+    else if (j.devVerifyUrl) {
+      note(n, "info", `<b>開發模式</b>（不需收信）— 直接開啟登入連結：<br><code>${esc(j.devVerifyUrl)}</code>`, true);
+    } else {
+      note(n, "ok", `登入連結已寄到 ${email}，點擊即可登入。`);
+    }
+  } catch (err) { note(n, "err", "網路錯誤: " + err.message); }
+  btn.disabled = false; btn.textContent = "Send sign-in link";
+  return false;
+}
+
+async function doGoogle() {
+  const n = $("gNote");
+  try {
+    const { ok, j } = await api("/api/google-login");
+    if (!ok) { note(n, "err", j.error || "Google 登入不可用"); return; }
+    location.href = j.authUrl;
+  } catch (err) { note(n, "err", "網路錯誤: " + err.message); }
+}
+
+async function doLogout() {
+  await api("/api/logout", { method: "POST" }).catch(() => {});
+  location.reload();
+}
+
+/* ================= app shell ================= */
+function showView(name) {
+  document.querySelectorAll(".view").forEach((v) => v.classList.toggle("on", v.id === "view" + name[0].toUpperCase() + name.slice(1)));
+}
+
+function go(view) {
+  S.view = view;
+  document.querySelectorAll(".nav[data-view]").forEach((b) => b.classList.toggle("active", b.dataset.view === view));
+  showView(view);
+  if (view === "feed") loadFeed();
+  if (view === "profile") loadProfile();
+  if (view === "friends") loadPeople();
+  if (view === "messages") loadChat();
+  if (view === "settings") loadSettings();
+  if (view !== "search") { $("searchInput").value = ""; $("searchResults").innerHTML = ""; }
+}
+
+function enterApp(user) {
+  S.user = user;
+  $("authScreen").classList.add("hide");
+  $("app").classList.remove("hide");
+  $("meAv").innerHTML = avImg(user.email, user.name, 38);
+  $("meName").textContent = user.name || "Signed in";
+  $("meEmail").textContent = user.email;
+  go("feed");
+  loadNotifs();
+  loadPeople();   // also fills the @mention picker
+}
+
+/* ================= feed ================= */
+async function loadFeed() {
+  const { ok, j } = await api("/api/feed");
+  if (!ok) { note($("postNote"), "err", j.error || "載入失敗"); return; }
+  S.feed = j.posts || [];
+  renderFeed();
+}
+
+function renderFeed() {
+  const q = ($("searchInput").value || "").toLowerCase();
+  const list = S.feed.filter((p) => !q || (p.body || "").toLowerCase().includes(q) || (p.author || "").toLowerCase().includes(q));
+  const box = $("feedList");
+  if (!list.length) { box.innerHTML = '<div class="card"><div class="empty">還沒有貼文。去追蹤朋友，或自己寫第一篇 👋</div></div>'; return; }
+  box.innerHTML = list.map((p) => `
+    <div class="card post" data-post="${esc(p.id)}">
+      <div class="post-av">${avImg(p.authorEmail || p.author, p.author)}</div>
+      <div style="flex:1;min-width:0">
+        <div class="post-head">
+          <span class="nm">${esc(p.author)}</span>
+          ${p.isNpc ? '<span class="chip" style="font-size:10px;padding:2px 7px">NPC</span>' : ""}
+          <span class="tm">${esc(ago(p.ts))}</span>
+          ${p.edited ? '<span class="edited">· 已編輯</span>' : ""}
+          ${p.authorEmail === (S.user && S.user.email) ? `<div class="post-menu">
+              <button class="post-menu-btn" title="更多" onclick="togglePostMenu(this,'${esc(p.id)}')">⋯</button>
+            </div>` : ""}
+        </div>
+        <div class="post-body" id="body-${esc(p.id)}">${hl(p.body, S.filter || "")}</div>
+        ${S.editingId === p.id ? editorHtml(p) : ""}
+        <div class="post-acts">
+          <button class="act ${p.liked ? "on" : ""}" onclick="toggleLike('${esc(p.id)}',this)">
+            <svg viewBox="0 0 24 24"><path d="M2 10h4v12H2zm20 1.4c0-.8-.7-1.4-1.5-1.4h-5.3l.8-4.2v-.3c0-.4-.2-.8-.4-1L14.6 3 9 8.6V21h9.5c.7 0 1.3-.4 1.6-1l2.3-6c.1-.2.1-.4.1-.6z"/></svg>
+            <span>${p.likes ? p.likes : "讚"}</span>
+          </button>
+          <button class="act" onclick="openComments('${esc(p.id)}')">
+            <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+            <span>${p.comments ? p.comments : "留言"}</span>
+          </button>
+        </div>
+        <div class="cmts" id="cmt-${esc(p.id)}"></div>
+      </div>
+    </div>`).join("");
+}
+
+function filterFeed(v) { S.filter = v || ""; renderFeed(); }
+
+async function createPost() {
+  const body = $("postBody").value.trim();
+  if (!body) { note($("postNote"), "err", "先寫點什麼吧"); return; }
+  $("postBtn").disabled = true;
+  const { ok, j } = await api("/api/posts", { method: "POST", body: JSON.stringify({ body }) });
+  $("postBtn").disabled = false;
+  if (!ok) { note($("postNote"), "err", j.error || "發佈失敗"); return; }
+  $("postBody").value = "";
+  $("postNote").className = "note";
+  loadFeed();
+}
+
+async function toggleLike(id, btn) {
+  const { ok, j } = await api("/api/posts/like", { method: "POST", body: JSON.stringify({ postId: id }) });
+  if (!ok) return;
+  const p = S.feed.find((x) => x.id === id);
+  if (p) { p.liked = j.liked; p.likes = j.likes; }
+  btn.classList.toggle("on", j.liked);
+  btn.querySelector("span").textContent = j.likes ? j.likes : "讚";
+}
+
+async function openComments(id) {
+  const box = $("cmt-" + id);
+  if (box.dataset.open) { box.innerHTML = ""; box.dataset.open = ""; return; }
+  const { ok, j } = await api("/api/posts/comments?postId=" + encodeURIComponent(id));
+  if (!ok) return;
+  box.dataset.open = "1";
+  box.innerHTML = (j.comments || []).map((c) => `
+    <div class="cmt"><div class="who" style="color:${esc(c.color)}">${esc(c.author)}</div>${esc(c.body)}</div>`).join("")
+    + `<div class="cmt-input"><input placeholder="寫留言…" onkeydown="if(event.key==='Enter')sendComment('${esc(id)}',this)">
+       <button class="btn primary sm" onclick="sendComment('${esc(id)}',this.previousElementSibling)">送出</button></div>`;
+}
+
+async function sendComment(id, input) {
+  const body = input.value.trim();
+  if (!body) return;
+  const { ok, j } = await api("/api/posts/comments", { method: "POST", body: JSON.stringify({ postId: id, body }) });
+  if (!ok) return;
+  const p = S.feed.find((x) => x.id === id);
+  if (p) p.comments = (p.comments || 0) + 1;
+  openComments(id);
+  const post = document.querySelector(`[data-post="${id}"]`);
+  const act = post?.querySelectorAll(".act span")[1];
+  if (act) act.textContent = p.comments;
+}
+
+/* ================= profile ================= */
+async function loadProfile() {
+  const { ok, j } = await api("/api/profile");
+  if (!ok) return;
+  S.profile = j;
+  $("profAv").innerHTML = avImg(j.profile.email, j.profile.name, 104);
+  $("profName").textContent = j.profile.name;
+  $("profBio").textContent = j.profile.bio || "—";
+  $("stPosts").textContent = j.stats.posts;
+  $("stFriends").textContent = j.stats.friends;
+  $("stLikes").textContent = j.stats.likes;
+  $("editName").value = j.profile.name || "";
+  $("editBio").value = j.profile.bio || "";
+  $("myPosts").innerHTML = (j.posts || []).length
+    ? j.posts.map((p) => `<div class="card"><div class="post-body">${esc(p.body)}</div>
+        <div class="post-head" style="margin-top:9px"><span class="tm">${esc(ago(p.ts))} · ${p.likes} 讚 · ${p.comments} 留言</span></div></div>`).join("")
+    : '<div class="card"><div class="empty">還沒有貼文</div></div>';
+}
+
+async function saveProfile() {
+  const name = $("editName").value.trim(), bio = $("editBio").value.trim();
+  const { ok, j } = await api("/api/profile", { method: "PATCH", body: JSON.stringify({ name, bio }) });
+  if (!ok) { note($("profNote"), "err", j.error || "儲存失敗"); return; }
+  note($("profNote"), "ok", "已儲存 ✓");
+  $("meName").textContent = j.profile.name;
+  $("meAv").textContent = initial(j.profile.name);
+  loadProfile();
+}
+
+/* ================= friends ================= */
+async function loadPeople() {
+  const { ok, j } = await api("/api/friends");
+  if (!ok) return;
+  S.people = j.people || [];
+  renderPeople();
+}
+
+function renderPeople() {
+  const incoming = S.people.filter((p) => p.requestIn);
+  const list = S.people.filter((p) => !p.requestIn);
+  const box = $("peopleList");
+
+  const reqCard = incoming.length ? `
+    <div class="card" style="border-color:rgba(24,119,242,.4)">
+      <h3 class="ch">好友邀請 · ${incoming.length}</h3>
+      ${incoming.map((p) => `
+        <div class="srow" style="background:transparent;border:0;padding:8px 0">
+          <div class="av">${avImg(p.email, p.name, 36)}</div>
+          <div style="flex:1;min-width:0">
+            <div class="t"><b>${esc(p.name)}</b> <span>· 想加你為好友</span></div>
+            <div class="t"><span>${esc(p.bio || "")}</span></div>
+          </div>
+          <div class="req-row" style="margin:0;flex:0 0 auto;width:160px">
+            <button class="btn accept sm" onclick="respondFriend('${esc(p.email)}',true)">接受</button>
+            <button class="btn decline sm" onclick="respondFriend('${esc(p.email)}',false)">忽略</button>
+          </div>
+        </div>`).join("")}
+    </div>` : "";
+
+  const cards = list.map((p) => `
+    <div class="person">
+      <div class="av">${avImg(p.email, p.name, 64)}</div>
+      <div class="nm">${esc(p.name)}</div>
+      <div class="bio">${esc(p.bio || "")}</div>
+      <div style="font-size:11.5px;color:var(--dim);margin-top:6px">${p.posts} 篇貼文</div>
+      ${p.requestSent
+        ? `<div class="st pending">等待對方回覆…</div>
+           <button class="btn rem" onclick="friendAction('${esc(p.email)}','remove')">取消邀請</button>`
+        : p.isFriend
+          ? `<button class="btn rem" onclick="friendAction('${esc(p.email)}','remove')">已加好友</button>`
+          : `<button class="btn add" onclick="friendAction('${esc(p.email)}','request')">加好友</button>`}
+    </div>`).join("");
+
+  box.innerHTML = reqCard + (cards || '<div class="card"><div class="empty">還沒有其他人</div></div>');
+}
+
+async function friendAction(email, action) {
+  const { ok, j } = await api("/api/friends", { method: "POST", body: JSON.stringify({ email, action }) });
+  if (!ok) { alert(j.error || "操作失敗"); return; }
+  loadPeople();
+}
+
+async function respondFriend(email, accept) {
+  const { ok, j } = await api("/api/friends", { method: "POST", body: JSON.stringify({ email, action: accept ? "accept" : "decline" }) });
+  if (!ok) { alert(j.error || "操作失敗"); return; }
+  loadPeople();
+  loadNotifs();
+}
+
+/* ================= messages ================= */
+let PEERS = {};
+
+async function loadChat(peer) {
+  if (peer) S.peer = peer;
+  const { ok, j } = await api("/api/messages?peer=" + encodeURIComponent(S.peer));
+  if (!ok) return;
+  if (j.peers) PEERS = j.peers;
+  const list = $("msgList");
+  list.innerHTML = "";
+  const msgs = j.messages || [];
+  const p = PEERS[S.peer] || j.npc || { name: "Mika", blurb: "" };
+  if (!msgs.length) {
+    list.innerHTML = '<div class="empty">跟 Mika 說聲嗨吧 👋<br><span style="opacity:.7">她在唱片行裡，隨時都在。</span></div>';
+  } else {
+    msgs.forEach(addBubble);
+  }
+  list.scrollTop = list.scrollHeight;
+  const n = msgs.filter((m) => m.role === "npc").length;
+  const badge = $("msgBadge");
+  badge.textContent = n;
+  badge.classList.toggle("hide", n === 0);
+  $("convName").textContent = p.name;
+  $("convAv").innerHTML = avImg(p.id + "@fbclone.app", p.name, 44);
+  $("convStatus").textContent = p.blurb || "● 在線";
+  loadThreads();
+}
+
+/** The conversation list in the Messages sidebar. */
+async function loadThreads() {
+  const { ok, j } = await api("/api/threads");
+  const box = $("threadList");
+  if (!ok) { box.innerHTML = '<div class="empty" style="padding:20px">—</div>'; return; }
+  if (j.peers) PEERS = j.peers;
+  const threads = j.threads || [];
+  if (!threads.length) { box.innerHTML = '<div class="empty" style="padding:24px 14px">還沒有人</div>'; return; }
+  box.innerHTML = threads.map((t) => `
+    <div class="thread ${t.peer === S.peer ? "on" : ""}" onclick="switchPeer('${esc(t.peer)}')">
+      <div class="av">${avImg(t.peer + "@fbclone.app", t.who, 40)}</div>
+      <div style="flex:1;min-width:0">
+        <div class="nm">${esc(t.who)}</div>
+        <div class="pv">${t.count ? t.count + " 則訊息 · " + esc(ago(t.lastTs)) : esc(t.blurb || "開始對話")}</div>
+      </div>
+    </div>`).join("");
+}
+
+function switchPeer(peer) {
+  S.peer = peer;
+  loadChat(peer);
+}
+
+function addBubble(m) {
+  const list = $("msgList");
+  const e = list.querySelector(".empty");
+  if (e) e.remove();
+  const b = document.createElement("div");
+  b.className = "bub " + (m.role === "user" ? "me" : "her");
+  const st = document.createElement("span");
+  st.className = "st";
+  st.textContent = clock(m.ts || Date.now());
+  b.appendChild(document.createTextNode(m.text || ""));
+  b.appendChild(st);
+  list.appendChild(b);
+  list.scrollTop = list.scrollHeight;
+}
+
+function showTyping(on) {
+  const list = $("msgList");
+  let t = list.querySelector(".typing");
+  if (on && !t) {
+    t = document.createElement("div");
+    t.className = "typing";
+    t.innerHTML = "<i></i><i></i><i></i>";
+    list.appendChild(t);
+    list.scrollTop = list.scrollHeight;
+  } else if (!on && t) t.remove();
+}
+
+async function sendChat() {
+  if (S.busy) return;
+  const input = $("chatText");
+  const text = input.value.trim();
+  if (!text) return;
+  S.busy = true;
+  $("chatSend").disabled = true;
+  input.value = "";
+  showTyping(true);
+  try {
+    const { ok, j } = await api("/api/chat", { method: "POST", body: JSON.stringify({ text, peer: S.peer }) });
+    showTyping(false);
+    if (j.userMessage) addBubble(j.userMessage);
+    if (!ok) note($("chatNote"), "err", j.error || "傳送失敗");
+    else if (j.message) addBubble(j.message);
+  } catch (e) {
+    showTyping(false);
+    note($("chatNote"), "err", "網路錯誤: " + e.message);
+  }
+  S.busy = false;
+  $("chatSend").disabled = false;
+  input.focus();
+}
+
+$("chatSend").addEventListener("click", sendChat);
+$("chatText").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendChat(); } });
+$("chatReset").addEventListener("click", async () => {
+  if (!confirm("開始新的對話？")) return;
+  await api("/api/chat/reset", { method: "POST", body: JSON.stringify({ peer: S.peer }) });
+  loadChat();
+});
+
+/* ================= notifications ================= */
+async function loadNotifs() {
+  const { ok, j } = await api("/api/notifications");
+  if (!ok) return;
+  const badge = $("notifBadge");
+  badge.classList.toggle("hide", !j.unread);
+  const list = $("notifList");
+  if (!j.notifications?.length) { list.innerHTML = '<div class="empty" style="padding:26px">還沒有通知</div>'; return; }
+  const verbs = { like: "讚了你的貼文", comment: "留言在你的貼文", friend: "加你為好友", mention: "在貼文中提到你" };
+  list.innerHTML = j.notifications.map((n) => `
+    <div class="notif-item ${n.read ? "" : "unread"}" onclick="openNotif('${esc(n.id)}','${esc(n.postId ?? "")}')">
+      <div class="av" style="width:36px;height:36px;flex:0 0 36px;font-size:14px;background:linear-gradient(145deg,#1877f2,#7c3aed)">${esc(initial(n.from))}</div>
+      <div style="flex:1;min-width:0">
+        <div class="t"><b>${esc(n.from)}</b> ${esc(verbs[n.kind] || n.kind)}</div>
+        <div class="w">${esc(ago(n.ts))}${n.text ? " · " + esc(String(n.text).slice(0, 60)) : ""}</div>
+      </div>
+    </div>`).join("");
+}
+
+function toggleNotifs() {
+  const p = $("notifPanel");
+  const on = p.classList.toggle("on");
+  if (on) loadNotifs();
+}
+
+async function markNotifsRead() {
+  await api("/api/notifications", { method: "POST", body: JSON.stringify({ readAll: true }) });
+  loadNotifs();
+}
+
+async function openNotif(id, postId) {
+  await api("/api/notifications", { method: "POST", body: JSON.stringify({ id }) });
+  $("notifPanel").classList.remove("on");
+  if (postId) { go("feed"); }
+  else loadNotifs();
+}
+
+/* ================= search ================= */
+let searchTimer = null;
+function doSearch(v) {
+  clearTimeout(searchTimer);
+  if (!v.trim()) { go("feed"); $("searchResults").innerHTML = ""; return; }
+  searchTimer = setTimeout(async () => {
+    const { ok, j } = await api("/api/search?q=" + encodeURIComponent(v));
+    if (!ok) return;
+    showView("search");
+    const box = $("searchResults");
+    const people = (j.people ?? []).map((p) => `
+      <div class="srow">
+        <div class="av">${avImg(p.email, p.name, 36)}</div>
+        <div style="flex:1;min-width:0">
+          <div class="t"><b>${hl(p.name, q)}</b> ${p.isFriend ? '<span>· 好友</span>' : ""}</div>
+          <div class="t"><span>${hl(p.bio || "", q)}</span></div>
+        </div>
+        <button class="btn ${p.isFriend ? "ghost" : "primary"} sm" onclick="friendAction('${esc(p.email)}','${p.isFriend ? "remove" : "request"}')">
+          ${p.isFriend ? "已加好友" : "加好友"}
+        </button>
+      </div>`).join("");
+    const posts = (j.posts ?? []).map((p) => `
+      <div class="srow">
+        <div class="av">${avImg(p.author, p.author, 36)}</div>
+        <div style="flex:1;min-width:0">
+          <div class="t"><b>${hl(p.author, q)}</b> <span>· ${esc(ago(p.ts))}</span></div>
+          <div class="t">${hl(String(p.body).slice(0, 160), q)}</div>
+        </div>
+      </div>`).join("");
+    box.innerHTML =
+      (people ? `<div class="sec"><h3>人 · People (${j.people.length})</h3>${people}</div>` : "") +
+      (posts ? `<div class="sec"><h3>貼文 · Posts (${j.posts.length})</h3>${posts}</div>` : "") ||
+      `<div class="card"><div class="empty">找不到「${esc(v)}」的結果</div></div>`;
+  }, 260);
+}
+
+/* ================= settings ================= */
+async function loadSettings() {
+  const { ok, j } = await api("/api/settings");
+  if (!ok) return;
+  $("setEmail").textContent = j.account.email || "—";
+  $("setName").textContent = j.account.name || "—";
+  $("setSince").textContent = j.account.createdAt ? new Date(j.account.createdAt).toLocaleDateString() : "—";
+  $("setNameInput").value = j.account.name || "";
+  $("setBioInput").value = j.account.bio || "";
+  $("setLikes").checked = j.settings.notify_likes;
+  $("setComments").checked = j.settings.notify_comments;
+  $("setFriends").checked = j.settings.notify_friends;
+}
+
+async function saveSettings() {
+  const { ok, j } = await api("/api/settings", {
+    method: "POST",
+    body: JSON.stringify({
+      name: $("setNameInput").value.trim(),
+      bio: $("setBioInput").value.trim(),
+      notify_likes: $("setLikes").checked,
+      notify_comments: $("setComments").checked,
+      notify_friends: $("setFriends").checked,
+    }),
+  });
+  if (!ok) { note($("setNote"), "err", j.error || "儲存失敗"); return; }
+  note($("setNote"), "ok", "已儲存 ✓");
+  $("meName").textContent = j.account.name;
+  $("meAv").textContent = initial(j.account.name);
+  loadProfile();
+}
+
+/* ================= inline post editor ================= */
+const EMOJIS = ["😀","😂","🥰","😎","🤔","😭","👍","🙌","🔥","✨","🎉","💯","❤️","☕","🌧️","🎧"];
+
+function editorHtml(p) {
+  return `<div class="editor" id="ed-${esc(p.id)}">
+    <textarea id="edta-${esc(p.id)}" oninput="onEditInput('${esc(p.id)}')" onkeydown="onEditKey(event,'${esc(p.id)}')">${esc(p.body)}</textarea>
+    <div class="editor-bar">
+      ${EMOJIS.map((e) => `<button class="emoji" onclick="insertEmoji('${esc(p.id)}','${e}')">${e}</button>`).join("")}
+      <span class="editor-count" id="edc-${esc(p.id)}"></span>
+    </div>
+    <div class="editor-actions">
+      <button class="btn ghost sm" style="flex:1" onclick="cancelEdit()">取消</button>
+      <button class="btn primary sm" style="flex:1" onclick="saveEdit('${esc(p.id)}')">儲存</button>
+    </div>
+  </div>`;
+}
+
+function onEditInput(id) {
+  const ta = document.getElementById("edta-" + id);
+  const c = document.getElementById("edc-" + id);
+  if (!ta || !c) return;
+  c.textContent = `${ta.value.length} / 2000`;
+  c.classList.toggle("over", ta.value.length > 2000);
+}
+
+function onEditKey(e, id) {
+  if (e.key === "Escape") { e.preventDefault(); cancelEdit(); }
+  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); saveEdit(id); }
+}
+
+function insertEmoji(id, emoji) {
+  const ta = document.getElementById("edta-" + id);
+  if (!ta) return;
+  const start = ta.selectionStart ?? ta.value.length;
+  const end = ta.selectionEnd ?? ta.value.length;
+  ta.value = ta.value.slice(0, start) + emoji + ta.value.slice(end);
+  ta.focus();
+  ta.selectionStart = ta.selectionEnd = start + emoji.length;
+  onEditInput(id);
+}
+
+function startEdit(id) {
+  S.editingId = id;
+  renderFeed();
+  const ta = document.getElementById("edta-" + id);
+  if (ta) { ta.focus(); ta.selectionStart = ta.value.length; onEditInput(id); }
+}
+
+function cancelEdit() {
+  S.editingId = null;
+  renderFeed();
+}
+
+async function saveEdit(id) {
+  const ta = document.getElementById("edta-" + id);
+  if (!ta) return;
+  const body = ta.value.trim();
+  if (!body) { note($("postNote"), "err", "貼文不能是空的"); return; }
+  if (body.length > 2000) { note($("postNote"), "err", "貼文太長了（上限 2000 字）"); return; }
+  const { ok, j } = await api("/api/posts/edit", { method: "POST", body: JSON.stringify({ id, body }) });
+  if (!ok) { note($("postNote"), "err", j.error || "編輯失敗"); return; }
+  S.editingId = null;
+  $("postNote").className = "note";
+  loadFeed();
+}
+
+/* ================= @mention autocomplete ================= */
+let mentionCtx = null;
+
+function onComposerInput() {
+  const ta = $("postBody");
+  const pos = ta.selectionStart;
+  const before = ta.value.slice(0, pos);
+  const m = before.match(/@([\p{L}\p{N}_.]{0,24})$/u);
+  hideMentions();
+  if (!m) return;
+  const q = m[1].toLowerCase();
+  const pool = (S.people && S.people.length ? S.people : []);
+  const hits = pool.filter((p) => p.name.toLowerCase().includes(q) || p.email.split("@")[0].toLowerCase().includes(q)).slice(0, 6);
+  if (!hits.length) return;
+  mentionCtx = { q, start: pos - m[1].length - 1, hits, index: 0 };
+  const pop = document.createElement("div");
+  pop.className = "mention-pop";
+  pop.id = "mentionPop";
+  pop.style.left = "14px";
+  pop.style.top = (ta.offsetTop + ta.offsetHeight + 6) + "px";
+  pop.innerHTML = hits.map((p, i) => `
+    <div class="mention-item ${i === 0 ? "hi" : ""}" onmousedown="pickMention(${i})">
+      <div class="av">${avImg(p.email, p.name, 30)}</div>
+      <div style="min-width:0">
+        <div class="t">${esc(p.name)}</div>
+        <div class="s">${esc(p.email)}</div>
+      </div>
+    </div>`).join("");
+  ta.parentElement.style.position = "relative";
+  ta.parentElement.appendChild(pop);
+}
+
+function hideMentions() {
+  const p = document.getElementById("mentionPop");
+  if (p) p.remove();
+  mentionCtx = null;
+}
+
+function pickMention(i) {
+  if (!mentionCtx) return;
+  const ta = $("postBody");
+  const p = mentionCtx.hits[i];
+  const insert = "@" + p.name + " ";
+  ta.value = ta.value.slice(0, mentionCtx.start) + insert + ta.value.slice(ta.selectionStart);
+  const caret = mentionCtx.start + insert.length;
+  ta.focus();
+  ta.selectionStart = ta.selectionEnd = caret;
+  hideMentions();
+}
+
+function onComposerKey(e) {
+  if (!mentionCtx) return;
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+    e.preventDefault();
+    const items = [...document.querySelectorAll(".mention-item")];
+    if (!items.length) return;
+    mentionCtx.index = (mentionCtx.index + (e.key === "ArrowDown" ? 1 : items.length - 1)) % items.length;
+    items.forEach((n, i) => n.classList.toggle("hi", i === mentionCtx.index));
+  } else if (e.key === "Enter" || e.key === "Tab") {
+    e.preventDefault();
+    pickMention(mentionCtx.index);
+  } else if (e.key === "Escape") {
+    hideMentions();
+  }
+}
+
+/* ================= post edit / delete ================= */
+async function deletePost(id) {
+  if (!confirm("刪除這篇貼文？")) return;
+  const { ok, j } = await api("/api/posts/delete", { method: "POST", body: JSON.stringify({ id }) });
+  if (!ok) { alert(j.error || "刪除失敗"); return; }
+  if (S.editingId === id) S.editingId = null;
+  loadFeed();
+}
+
+function togglePostMenu(btn, id) {
+  const existing = btn.parentElement.querySelector(".post-menu-pop");
+  if (existing) { existing.remove(); return; }
+  document.querySelectorAll(".post-menu-pop").forEach((n) => n.remove());
+  const pop = document.createElement("div");
+  pop.className = "post-menu-pop";
+  pop.innerHTML = `<button onclick="startEdit('${esc(id)}')">✏️ 編輯</button>
+                    <button class="danger" onclick="deletePost('${esc(id)}')">🗑️ 刪除</button>`;
+  btn.parentElement.appendChild(pop);
+  setTimeout(() => document.addEventListener("click", function h(e) {
+    if (!pop.contains(e.target)) { pop.remove(); document.removeEventListener("click", h); }
+  }), 0);
+}
+
+/* ================= init ================= */
+(async function init() {
+  // config first so the chat UI knows whether the NPC is available
+  try { S.config = (await api("/api/config")).j || {}; } catch {}
+  if (!S.config.google) {
+    $("gBtn").dataset.unconfigured = "1";
+    $("gBtnTitle").textContent = "Continue with Google — 尚未設定";
+    $("gBtn").style.opacity = ".72";
+  }
+  // tell the truth about who can receive an email
+  if (S.config.email && S.config.email.canEmailAnyone === false) {
+    for (const id of ["emailHintSignup", "emailHintLogin"]) {
+      const el = $(id);
+      if (el) el.innerHTML =
+        "📮 Email 驗證目前只寄得到 <b>howardtong2026@gmail.com</b>（Resend 共用測試寄件人）。<br>" +
+        "想讓任何人收到驗證信 → 為 Cloudflare Email Sending 綁定一個網域（免費）。<br>" +
+        "其他使用者請用 <b>Continue with Google</b> 登入。";
+    }
+  }
+
+  // session
+  try {
+    const { j } = await api("/api/session");
+    if (j.user) { enterApp(j.user); return; }
+  } catch {}
+
+  // came back from OAuth / verify link?
+  const q = new URLSearchParams(location.search);
+  if (q.get("error")) {
+    showTab("login");
+    note($("liNote"), "err", "Google 登入失敗: " + q.get("error"));
+  }
+  if (q.get("signedin")) {
+    try {
+      const { j } = await api("/api/session");
+      if (j.user) { enterApp(j.user); history.replaceState({}, "", "/"); return; }
+    } catch {}
+  }
+  const t = q.get("token");
+  if (t) {
+    showTab("login");
+    note($("liNote"), "info", "正在驗證 email…");
+    try {
+      const { ok, j } = await api("/api/verify?token=" + encodeURIComponent(t) + (q.get("email") ? "&email=" + encodeURIComponent(q.get("email")) : ""));
+      if (ok && j.ok) {
+        note($("liNote"), "ok", "Email 已驗證，歡迎！");
+        const s = await api("/api/session");
+        if (s.j.user) { enterApp(s.j.user); history.replaceState({}, "", "/"); return; }
+      } else {
+        note($("liNote"), "err", j.error || "驗證失敗");
+      }
+    } catch (e) { note($("liNote"), "err", "網路錯誤: " + e.message); }
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,51 @@
+name = "facebook-clone"
+
+compatibility_date = "2026-10-19"
+main = "src/index.js"
+workers_dev = true
+preview_urls = false
+
+[assets]
+directory = "public"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+
+[vars]
+# Sender address for Resend. MUST be on a domain you verified in Resend.
+# e.g. "Facebook Clone <noreply@yourdomain.com>"
+RESEND_FROM = "Facebook Clone <onboarding@resend.dev>"
+# Cloudflare Email Sending — set once a domain is onboarded for Email Sending.
+# This is the sender used for the `send_email` binding and can reach ANY recipient.
+EMAIL_FROM = "Facebook Clone <noreply@howardtong.eu.org>"
+# Flip to "true" after `wrangler email sending enable <domain>` succeeds.
+# Until then the app knows it can only email the Resend account address.
+EMAIL_SENDING_ACTIVE = "false"
+# Public URL of this Worker. Update after first deploy.
+SITE_URL = "https://facebook-clone.howardtong2026.workers.dev"
+# Signs session cookies. Change this to a long random string for production.
+SESSION_SECRET = "n0EoDc4MD0MsVC16ea7zzDauYivUAMJr4zD06HGK2cc"
+# Set to "true" to have the API return the verification link in responses
+# (handy for testing without an inbox). Set to "false" in production.
+EXPOSE_DEV_TOKEN = "true"
+# The email address registered on the Resend account. Resend's shared test
+# sender (onboarding@resend.dev) can only deliver to this address.
+RESEND_ACCOUNT_EMAIL = "howardtong2026@gmail.com"
+# Local chat bridge (chat-bridge.mjs) exposed via a cloudflared quick tunnel.
+# CHAT_BRIDGE_TOKEN is stored as a Worker secret.
+CHAT_BRIDGE_URL = "https://mrs-dialog-mug-arnold.trycloudflare.com"
+
+[[kv_namespaces]]
+binding = "VERIFY_TOKENS"
+id = "5b08759a437f4ef590ad425cdaf905b5"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "fbclone"
+database_id = "9b14dc33-d07e-4eef-b4b8-331e1b6c90d7"
+
+# Cloudflare Email Sending binding.
+# Requires a domain onboarded for Email Sending on this account:
+#   npx wrangler email sending enable <yourdomain>
+# Once onboarded, the Worker can email ANY recipient (no API key needed).
+[[send_email]]
+name = "EMAIL"

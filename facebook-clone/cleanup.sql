@@ -1,0 +1,10 @@
+DELETE FROM notifications WHERE user_email LIKE '%@gmail.com' OR from_email LIKE '%@gmail.com';
+DELETE FROM comments WHERE user_email LIKE '%@gmail.com';
+DELETE FROM likes WHERE user_email LIKE '%@gmail.com';
+DELETE FROM posts WHERE author_email LIKE '%@gmail.com';
+DELETE FROM messages WHERE user_email LIKE '%@gmail.com';
+DELETE FROM chat_sessions WHERE user_email LIKE '%@gmail.com';
+DELETE FROM settings WHERE user_email LIKE '%@gmail.com';
+DELETE FROM friend_requests WHERE from_email LIKE '%@gmail.com' OR to_email LIKE '%@gmail.com';
+DELETE FROM friends WHERE owner_email LIKE '%@gmail.com' OR friend_email LIKE '%@gmail.com';
+DELETE FROM profiles WHERE email LIKE '%@gmail.com';

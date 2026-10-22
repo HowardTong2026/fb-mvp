@@ -1,0 +1,8 @@
+{
+  "port": 8788,
+  "token": "fbclone-chat-7f3d9a2e4c8b16f0",
+  "agent": "mika",
+  "model": "minimax-m3.1-flash-free",
+  "provider": "opencode",
+  "opencodeServiceJson": "C:/Users/user/.local/state/opencode/service.json"
+}
